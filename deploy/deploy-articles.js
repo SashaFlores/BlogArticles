@@ -40,11 +40,6 @@ module.exports = async({getNamedAccounts, deployments}) => {
     const impFromProxy = await articlesProxy.implementation()
     console.log(`Implementation Address from Articles Proxy: ${impFromProxy}`) 
  
-    // if (developmentChains.includes(network.name)) {
-        
-    //     const testUpdate = await articles.listTokens([1])
-    //     console.log(`test list tokens: ${await articles.isListed(1)}`) 
-    // }
 
     if(!developmentChains.includes(network.name)) {
         console.log(`Verifying Implementation First on ${network.name}`)

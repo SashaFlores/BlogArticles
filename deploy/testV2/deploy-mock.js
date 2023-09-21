@@ -45,7 +45,6 @@ module.exports = async({getNamedAccounts, deployments}) => {
     console.log(`check upgrade: ${await upgradedArticles.version()}`)
     console.log(`check owner: ${await upgradedArticles.owner()}`)
 
-    // Shane Todd
 }
 module.exports.tags = ['mock']
 module.exports.dependencies = ['articles']
