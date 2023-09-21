@@ -1,5 +1,6 @@
-const { ethers } = require('hardhat')
+const { ethers, network } = require('hardhat')
 const { assert } = require('chai')
+const { developmentChains, verify } = require('../helpers')
 
 
 module.exports = async({getNamedAccounts, deployments}) => {
@@ -9,43 +10,48 @@ module.exports = async({getNamedAccounts, deployments}) => {
 
     console.log({namedAccounts: await getNamedAccounts()})
 
-    const deployedArticles = await deploy('Articles', {
+    const deployedImp = await deploy('Articles', { from: deployer, log: true  })
+    console.log(`Deployed Imp Address is ${deployedImp.address}`)
+
+    const implementation = await ethers.getContractAt('Articles', deployedImp.address)
+
+    const encodedFuncData = implementation.interface.encodeFunctionData('__Articles_init', ['test uri'])
+
+    const deployedProxy = await deploy('ArticlesProxy', {
         from: deployer,
-        log: true,
-        args:[],
-        proxy: {
-            proxyContract: 'UUPS',
-            execute: {
-                init: {
-                    methodName: '__Articles_init',
-                    args:['sasha.com/{id}.js']
-                }
-            }
-        },
-        save: true,
-        waitConfirmations: network.config.blockConfirmations || 1
+        args:[deployedImp.address, encodedFuncData],
+        log: true
     })
-
-
-    const articlesProxy = await ethers.getContractAt('Articles', deployedArticles.address)
-    console.log(`Articles Proxy Address is: ${articlesProxy.target}`)              
+    console.log(`Deployed Proxy Address is ${deployedProxy.address}`)
 
     const Articles = await ethers.getContractFactory('Articles')
+    const articlesProxy = await ethers.getContractAt('ArticlesProxy', deployedProxy.address)
+
     const articles = Articles.attach(articlesProxy.target)
-       
+    console.log(`Articles Address is ${await articles.getAddress()}`)
+
     assert(await articles.owner() == deployer, 'Owner check failed: Owner is not the deployer')
     console.log('Owner check passed: Owner is the deployer')
 
     // Get the implementation address from the proxy contract
-    const implementation = await articles.getImplementation();
-    console.log(`Articles Implementation Address is: ${implementation}`) 
+    const impFromArticles = await articles.getImplementation()
+    console.log(`Implementation Address from Articles: ${impFromArticles}`) 
 
-
-    if (developmentChains.includes(network.name)) {
+    const impFromProxy = await articlesProxy.implementation()
+    console.log(`Implementation Address from Articles Proxy: ${impFromProxy}`) 
+ 
+    // if (developmentChains.includes(network.name)) {
         
-        const testUpdate = await articles.listTokens([1])
-        console.log(`test list tokens: ${await articles.isListed(1)}`) 
+    //     const testUpdate = await articles.listTokens([1])
+    //     console.log(`test list tokens: ${await articles.isListed(1)}`) 
+    // }
+
+    if(!developmentChains.includes(network.name)) {
+        console.log(`Verifying Implementation First on ${network.name}`)
+        await verify(implementation)
+        console.log(`Verifying Articles First on ${network.name}`)
+        await verify(articles.address, args)
     }
 
 }
-module.exports.tags = ['all', 'articles']
+module.exports.tags = ['articlesProxy', 'articles', 'implementation']

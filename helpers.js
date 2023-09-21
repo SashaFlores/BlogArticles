@@ -1,10 +1,26 @@
-const { assert, expect } = require('chai')
-const { ethers } = require('hardhat')
+const { expect } = require('chai')
+const { ethers, run } = require('hardhat')
+
 
 const developmentChains = ['hardhat', 'localDev']
 
 const ZeroAddress = ethers.ZeroAddress
 
+const verify = async (contractAddress, args) => {
+    console.log('Verifying contract...')
+    try {
+        await run('verify:verify', {
+            address: contractAddress,
+            constructorArguments: args,     // replace wih real arguments
+        })
+    } catch (e) {
+        if (e.message.toLowerCase().includes('already verified')) {
+            console.log('Already verified!')
+        } else {
+            console.log(e)
+        }
+    }
+}
 
 async function expectRevert(promise, expectedErrorMessage) {
     try {
@@ -13,9 +29,11 @@ async function expectRevert(promise, expectedErrorMessage) {
     } catch (error) {
         // Check if the error message matches the expected error message.
         if (error.message.includes(expectedErrorMessage)) {
-            return; // Revert as expected
+            // Revert as expected
+            return; 
         }
-        throw error; // Revert message doesn't match the expectation
+        // Revert message doesn't match the expectation
+        throw error; 
     }
 }
 
@@ -51,4 +69,4 @@ async function expectRevertWithCustomError(promise, expectedErrorName, ...expect
 
 
 
-module.exports = { developmentChains, ZeroAddress, expectRevert, expectRevertWithCustomError }
+module.exports = { developmentChains, ZeroAddress, verify, expectRevert, expectRevertWithCustomError }

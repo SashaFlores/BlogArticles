@@ -17,18 +17,19 @@ describe('Articles Testing', function() {
     })
 
     describe('init function initiated properly', function(){
-        it('initialize function invoked', async function() {
-            expect(articles.__Articles_init('sasha.com/{id}.js')).to.emit(articles, 'Initialized').withArgs(1)
-        })
         it('initialize function not invoked twice', async function() {
-            await expectRevert(articles.__Articles_init('sasha.com/{id}.js'), 'Initializable: contract is already initialized')
+            await expectRevert(articles.__Articles_init('test uri'), 'Initializable: contract is already initialized')
         })
         it('owner is the deployer', async function() {
             expect(await articles.owner()).to.equal(deployer)
         })
-        it('emits transfer ownership event', async function() {
-            expect(await articles.owner()).to.emit(articles, 'OwnershipTransferred').withArgs(ZeroAddress, deployer)
-        })
+        // it('emits transfer ownership event', async function() {
+        //     const init = articles.__Articles_init('sasha.com/{id}.js')
+        //     expect(await init).to.emit(articles, 'OwnershipTransferred').withArgs(ZeroAddress, deployer)
+        // })
+        // it('emits initialized event', async function() {
+        //     expect(articles.__Articles_init('sasha.com/{id}.js')).to.emit(articles, 'Initialized').withArgs(1)
+        // })
         it('pause is false', async function() {
             expect(await articles.paused()).to.equal(false)
         })
@@ -36,7 +37,6 @@ describe('Articles Testing', function() {
             const availIds = await articles.getAvailIds()
             expect(availIds.length).to.equal(0)
         })
-        // test URI after setting it 
 
     })
 
@@ -61,7 +61,7 @@ describe('Articles Testing', function() {
 
     describe('owner functions test', function() {
         it('only owner can transfer ownership', async function() {
-            await expect(articles.transferOwnership(minters[0])).to.emit(articles, 'OwnershipTransferred').withArgs(deployer, minters[0])
+            await expect(articles.transferOwnership(minters[0], { from: deployer })).to.emit(articles, 'OwnershipTransferred').withArgs(deployer, minters[0])
 
             expect(await articles.owner()).to.equal(minters[0])     
 

@@ -14,17 +14,23 @@ module.exports = async({getNamedAccounts, deployments}) => {
 
     console.log({namedAccounts: await getNamedAccounts()})
 
-    const articles = await ethers.getContract('Articles')
-    console.log(`Articles V1 Address is: ${articles.target}`)               
+    
+    const Articles = await ethers.getContractFactory('Articles')
+    const articlesProxy = await ethers.getContract('ArticlesProxy')
+    const articles = Articles.attach(articlesProxy.target)
+    console.log(`Articles V1 Address is: ${await articles.getAddress()}`)        
+   
 
-    const mock = await deploy('ArticlesV2', { from: deployer, log: true })
-    console.log(`Articles V2 Implementation Address is: ${mock.address}`)
+    const deployedImp = await deploy('ArticlesV2', { from: deployer, log: true })
+    const secondImp = await ethers.getContractAt('ArticlesV2', deployedImp.address)
+    console.log(`Implementation V2 Address is: ${secondImp.target}`)
+
 
     await articles.pause()
     console.log(`Is Paused: ${await articles.paused()}`)
 
 
-    const upgrade = await articles.upgradeTo(mock.address)
+    const upgrade = await articles.upgradeTo(secondImp.target)
     const upgradeTx = await upgrade.wait(1)
     if (upgradeTx.status === 1) {
         console.log("Upgrade was successful!");
@@ -37,10 +43,9 @@ module.exports = async({getNamedAccounts, deployments}) => {
 
     
     console.log(`check upgrade: ${await upgradedArticles.version()}`)
+    console.log(`check owner: ${await upgradedArticles.owner()}`)
 
-    console.log(`test list tokens: ${await upgradedArticles.isListed(1)}`) 
-
-
+    // Shane Todd
 }
 module.exports.tags = ['mock']
 module.exports.dependencies = ['articles']

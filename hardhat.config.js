@@ -9,7 +9,9 @@ require('solidity-coverage')
 require('hardhat-gas-reporter')
 require('@nomicfoundation/hardhat-verify')
 require('hardhat-spdx-license-identifier')
+// require('hardhat-exposed')
 require('@primitivefi/hardhat-dodoc')
+require('@openzeppelin/hardhat-upgrades')
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -83,11 +85,18 @@ module.exports = {
     currency: "USD", 
   },
   solidity: {
-    version: '0.8.20',
+    compilers: [
+      {
+        version: '0.8.20',
+      }, 
+      {
+        version: '0.8.0',
+      }
+    ],
     settings: {
       optimizer: {
         enabled: true,
-        runs: 500,
+        runs: 1000,
       }
     }
   },
@@ -99,6 +108,11 @@ module.exports = {
       // optimisticEthereum: privateKey,
     }
   },
+  // exposed: {
+  //   exclude: ['mockV2/**/**', 'proxy/**/**'],
+  //   outDir: '@contracts-exposed',
+  //   prefix: '$',
+  // },
   paths: {
     sources: './contracts',
     deploy: './deploy',
