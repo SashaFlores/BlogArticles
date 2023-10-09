@@ -3,7 +3,6 @@ require('@nomicfoundation/hardhat-ethers')
 require('hardhat-deploy')
 require('hardhat-deploy-ethers')
 require('@nomicfoundation/hardhat-chai-matchers')
-// require('@nomicfoundation/hardhat-foundry')
 require('@nomiclabs/hardhat-solhint')
 require('solidity-coverage')
 require('hardhat-gas-reporter')
@@ -26,21 +25,23 @@ module.exports = {
       saveDeployments: true,
       tags: ['staging'],
       blockConfirmations: 1,
-      accounts: [`0x${process.env.MUMBAI_DEPLOYER}`]
+      accounts: [`0x${process.env.DEPLOYER}`]
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
       chainId: 11155111,
       saveDeployments: true,
       tags: ['staging'],
-      blockConfirmations: 1
+      blockConfirmations: 1,
+      accounts: [`0x${process.env.DEPLOYER}`]
     },
     eth: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       chainId: 1,
       saveDeployments: true,
       tags: ['live'],
-      blockConfirmations: 5
+      blockConfirmations: 5,
+      accounts: [`0x${process.env.DEPLOYER}`]
     },
     polygon: {
       url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -54,14 +55,8 @@ module.exports = {
       chainId: 8453,
       saveDeployments: true,
       tags: ['live'],
-      blockConfirmations: 5
-    },
-    astar: {
-      url: `https://astar-mainnet.g.alchemy.com/v2/your-alchemy-api-key`, //needs edit
-      chainId: 592,
-      saveDeployments: true,
-      tags: ['live'],
-      blockConfirmations: 5
+      blockConfirmations: 5,
+      accounts: [`0x${process.env.DEPLOYER}`]
     },
     optimism: {
       url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -75,7 +70,13 @@ module.exports = {
     deployer: {
       default: 0,
       mumbai: 0,
+      base: 0
     },
+    alex: {
+      default: 1,
+      mumbai: 1,
+      base: 1
+    }
   },
   gasReporter: {
     enabled: true,

@@ -1,10 +1,26 @@
 const { expect } = require('chai')
-const { ethers, run } = require('hardhat')
+const { ethers, run, network } = require('hardhat')
 
 
 const developmentChains = ['hardhat', 'localDev']
 
 const ZeroAddress = ethers.ZeroAddress
+
+const URI = 'https://www.sashaflores.xyz/metadata/'
+
+const PremiumFee = ethers.parseUnits('3200000', 'gwei')
+
+const StandardFee = ethers.parseUnits('1000000', 'gwei')
+
+const premiumId = 2
+
+const standardId = 1
+
+const chainId = network.config.chainId
+
+const url = network.config.url
+
+
 
 const verify = async (contractAddress, args) => {
     console.log('Verifying contract...')
@@ -67,6 +83,26 @@ async function expectRevertWithCustomError(promise, expectedErrorName, ...expect
     }
 }
 
+// ethers v5 => ethers v6
+// function getTxCost (promise, txHash) {
+//     const receipt = await ethers.provider.getTransactionReceipt(txHash)
+//     return BigNumber.from(receipt.effectiveGasPrice.mul(receipt.gasUsed))
+// }
 
 
-module.exports = { developmentChains, ZeroAddress, verify, expectRevert, expectRevertWithCustomError }
+
+
+module.exports = { 
+    developmentChains, 
+    ZeroAddress, 
+    URI, 
+    verify, 
+    expectRevert, 
+    expectRevertWithCustomError,
+    PremiumFee,
+    StandardFee,
+    premiumId, 
+    standardId,
+    chainId,
+    url
+}

@@ -5,7 +5,7 @@ const { developmentChains, verify } = require('../helpers')
 
 module.exports = async({getNamedAccounts, deployments}) => {
 
-    const { deploy } = deployments;
+    const { deploy, save } = deployments;
     const { deployer } = await getNamedAccounts();
 
     console.log({namedAccounts: await getNamedAccounts()})
@@ -15,7 +15,7 @@ module.exports = async({getNamedAccounts, deployments}) => {
 
     const implementation = await ethers.getContractAt('Articles', deployedImp.address)
 
-    const encodedFuncData = implementation.interface.encodeFunctionData('__Articles_init', ['test uri'])
+    const encodedFuncData = implementation.interface.encodeFunctionData('__Articles_init', ['https://www.sashaflores.xyz/metadata/'])
 
     const deployedProxy = await deploy('ArticlesProxy', {
         from: deployer,
@@ -30,17 +30,19 @@ module.exports = async({getNamedAccounts, deployments}) => {
     const articles = Articles.attach(articlesProxy.target)
     console.log(`Articles Address is ${await articles.getAddress()}`)
 
+    const artifacts = await deployments.getExtendedArtifact('Articles')
+    let deployedArticles = { address: articlesProxy.target, artifact: artifacts}
+    await save('Articles', deployedArticles)
+    const testDeployGet = await deployments.get('Articles')
+    console.log(`Test saved Deployment: ${testDeployGet.address}`)
+
+
     assert(await articles.owner() == deployer, 'Owner check failed: Owner is not the deployer')
     console.log('Owner check passed: Owner is the deployer')
 
-    // Get the implementation address from the proxy contract
-    const impFromArticles = await articles.getImplementation()
-    console.log(`Implementation Address from Articles: ${impFromArticles}`) 
 
-    const impFromProxy = await articlesProxy.implementation()
-    console.log(`Implementation Address from Articles Proxy: ${impFromProxy}`) 
- 
 
+    
     if(!developmentChains.includes(network.name)) {
         console.log(`Verifying Implementation First on ${network.name}`)
         await verify(implementation)
@@ -49,4 +51,4 @@ module.exports = async({getNamedAccounts, deployments}) => {
     }
 
 }
-module.exports.tags = ['articlesProxy', 'articles', 'implementation']
+module.exports.tags = ['all', 'articlesProxy', 'articles', 'implementation']

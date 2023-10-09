@@ -4,11 +4,13 @@ coverage
 coverage.json
 
 # Hardhat files
-/cache
-/artifacts
+cache
+artifacts
 gasReporter.txt
-/deployments
+deployments
 
 
-# misc
+# additional files
 extra.md
+docs
+

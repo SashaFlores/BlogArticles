@@ -15,25 +15,26 @@ contract Articles is Initializable, OwnableUpgradeable, ERC1155Upgradeable, UUPS
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    
-    string private constant NAME = 'Chainer'; 
 
-    string private constant SYMBOL = 'CHR';
+
+    uint256 private constant STANDARD = 1;
+
+    uint256 private constant PREMIUM =  2;
 
     mapping(uint256 => uint256) private _supply;
+
     mapping(address => CountersUpgradeable.Counter) private _nonces;
 
-    uint256[] private _availTokens;
+    event FundsReceived(address from, uint256 amount, address to);
 
-    event NewTokenListed(uint256[] ids);
-
-    error ListedOrZero(uint256 id);
-
-    error MintedOrOutofBond(uint256 id);
+    error InvalidSignature();
 
     error NonExistId(uint256 id);
 
-    
+    error Shame2Burn();
+
+
+
     // solhint-disable-next-line func-name-mixedcase, func-param-name-mixedcase, var-name-mixedcase 
     function __Articles_init(string memory URI) public virtual initializer {
         __Ownable_init();
@@ -41,6 +42,11 @@ contract Articles is Initializable, OwnableUpgradeable, ERC1155Upgradeable, UUPS
         __UUPSUpgradeable_init();
         __Pausable_init();
     }
+
+    receive() external payable {
+        _transferFunds();
+    }
+
 
     function pause() external virtual onlyOwner {
         _pause();
@@ -54,63 +60,42 @@ contract Articles is Initializable, OwnableUpgradeable, ERC1155Upgradeable, UUPS
         _setURI(newURI);
     }
 
-    function getAvailIds() external view virtual returns(uint256[] memory) {
-        return _availTokens;
+    function name() external pure virtual returns(string memory) {
+        return 'CHAINER';
     }
 
-    function getImplementation() external view virtual returns(address) {
-        return _getImplementation();
+    function symbol() external pure virtual returns(string memory) {
+        return 'CHNR';
     }
 
-    function listTokens(uint256[] calldata ids) public virtual onlyOwner whenNotPaused {
-        for (uint256 i = 0; i < ids.length; i++) {
-            if(ids[i] == 0 || isListed(ids[i])) {
-                revert ListedOrZero(ids[i]);
-            }
-            _availTokens.push(ids[i]);
+    function mint(uint256 id, bytes calldata signature) public payable virtual whenNotPaused {
+
+        if(!_verifySignature(id, signature)) {
+            revert InvalidSignature();
         }
-        emit NewTokenListed(ids);
-    }
-
-    function mint(uint256 id, bytes calldata signature) public payable virtual {
-        require(_verifySignature(id, signature), 'invalid signature');
-
-        if(id >= _availTokens.length || balanceOf(_msgSender(), id) != 0) {
-            revert MintedOrOutofBond(id);
+      
+        if(id == 2) {
+            require(msg.value >= 3200000 gwei, 'Premium fee required');
+        } else if(id == 1) {
+            require(msg.value >= 1000000 gwei, 'Standard fee required');
+        } else {
+            revert NonExistId(id);
         }
+        _transferFunds();
 
-        _mint(_msgSender(), id, 1, '');
+        _mint(_msgSender(), id, 1, '');        
     }
 
     function uri(uint256 id) public view virtual override returns (string memory) {
-        if(!isListed(id)) {
-            revert NonExistId(id);
-        }
         return string(abi.encodePacked(super.uri(id), StringsUpgradeable.toString(id), '.json'));
     }
 
-    function totalSupply(uint256 id) public view virtual returns(uint256) {
+
+    function totalSupply(uint256 id) public view returns(uint256){
         return _supply[id];
-
     }
-
-    function isListed(uint256 id) public view virtual returns (bool) {
-        for (uint256 i = 0; i < _availTokens.length; i++) {
-            if (_availTokens[i] == id) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function isMinted(uint256 id) public view virtual returns (bool) {
-        return Articles.totalSupply(id) > 0;
-    }
-
     
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
-        _requirePaused();
-    }
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner whenPaused{}
 
     function _beforeTokenTransfer (
         address operator,
@@ -128,7 +113,7 @@ contract Articles is Initializable, OwnableUpgradeable, ERC1155Upgradeable, UUPS
             }
         } 
         if(to == address(0)) {
-            revert();
+            revert Shame2Burn();
         }
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
@@ -141,10 +126,16 @@ contract Articles is Initializable, OwnableUpgradeable, ERC1155Upgradeable, UUPS
         return signer == _msgSender();
     }
 
-     function _incrementNonce(address signer) private returns(uint256 current) {
+    function _incrementNonce(address signer) private returns(uint256 current) {
         CountersUpgradeable.Counter storage nonce = _nonces[signer];
         current = nonce.current();
         nonce.increment();
+    }
+
+    function _transferFunds() private {
+        (bool success, ) = payable(owner()).call{value: msg.value}("");
+        require(success, 'transfer failed');
+       emit FundsReceived(_msgSender(), msg.value, owner());
     }
 
 }

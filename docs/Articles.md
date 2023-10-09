@@ -72,40 +72,6 @@ function balanceOfBatch(address[] accounts, uint256[] ids) external view returns
 |---|---|---|
 | _0 | uint256[] | undefined |
 
-### getAvailIds
-
-```solidity
-function getAvailIds() external view returns (uint256[])
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256[] | undefined |
-
-### getImplementation
-
-```solidity
-function getImplementation() external view returns (address)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
 ### isApprovedForAll
 
 ```solidity
@@ -129,66 +95,6 @@ function isApprovedForAll(address account, address operator) external view retur
 |---|---|---|
 | _0 | bool | undefined |
 
-### isListed
-
-```solidity
-function isListed(uint256 id) external view returns (bool)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| id | uint256 | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bool | undefined |
-
-### isMinted
-
-```solidity
-function isMinted(uint256 id) external view returns (bool)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| id | uint256 | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bool | undefined |
-
-### listTokens
-
-```solidity
-function listTokens(uint256[] ids) external nonpayable
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| ids | uint256[] | undefined |
-
 ### mint
 
 ```solidity
@@ -205,6 +111,23 @@ function mint(uint256 id, bytes signature) external payable
 |---|---|---|
 | id | uint256 | undefined |
 | signature | bytes | undefined |
+
+### name
+
+```solidity
+function name() external pure returns (string)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | string | undefined |
 
 ### owner
 
@@ -357,6 +280,23 @@ function supportsInterface(bytes4 interfaceId) external view returns (bool)
 | Name | Type | Description |
 |---|---|---|
 | _0 | bool | undefined |
+
+### symbol
+
+```solidity
+function symbol() external pure returns (string)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | string | undefined |
 
 ### totalSupply
 
@@ -533,6 +473,24 @@ event BeaconUpgraded(address indexed beacon)
 |---|---|---|
 | beacon `indexed` | address | undefined |
 
+### FundsReceived
+
+```solidity
+event FundsReceived(address from, uint256 amount, address to)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| from  | address | undefined |
+| amount  | uint256 | undefined |
+| to  | address | undefined |
+
 ### Initialized
 
 ```solidity
@@ -548,22 +506,6 @@ event Initialized(uint8 version)
 | Name | Type | Description |
 |---|---|---|
 | version  | uint8 | undefined |
-
-### NewTokenListed
-
-```solidity
-event NewTokenListed(uint256[] ids)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| ids  | uint256[] | undefined |
 
 ### OwnershipTransferred
 
@@ -691,37 +633,16 @@ event Upgraded(address indexed implementation)
 
 ## Errors
 
-### ListedOrZero
+### InvalidSignature
 
 ```solidity
-error ListedOrZero(uint256 id)
+error InvalidSignature()
 ```
 
 
 
 
 
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| id | uint256 | undefined |
-
-### MintedOrOutofBond
-
-```solidity
-error MintedOrOutofBond(uint256 id)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| id | uint256 | undefined |
 
 ### NonExistId
 
@@ -738,5 +659,16 @@ error NonExistId(uint256 id)
 | Name | Type | Description |
 |---|---|---|
 | id | uint256 | undefined |
+
+### Shame2Burn
+
+```solidity
+error Shame2Burn()
+```
+
+
+
+
+
 
 
