@@ -1,13 +1,17 @@
-# Sample Hardhat Project
+# Blog Articles
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+This repository is the web3 component of my portfolio, where readers can voluntarily mint an NFT for free for standard articles, while premium comprehensive tutorials will cost a small fee to grant reader access to code.
 
-Try running some of the following tasks:
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+### Current Blockchains:
+
+- Ethereum
+
+- Polygon
+
+- Binance
+
+- Base
+
+Only native coin of each blockchain is the accepted way of payment, soon expect implementing ERC 4337 to accept USD as a mean of payment.
+

@@ -33,6 +33,7 @@
     "@openzeppelin/hardhat-upgrades": "^3.9.0",
     "hardhat": "^2.22.18",
     "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-exposed": "^0.3.16",
     "hardhat-spdx-license-identifier": "^2.3.1"
   },
   "dependencies": {

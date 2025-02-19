@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-
+import { IBlog } from "./IBlog.sol";
 import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { Initializable, UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
 
 
-contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, PausableUpgradeable, UUPSUpgradeable { 
+contract Blog is IBlog, Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, PausableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable { 
     using Arrays for uint256[];
 
 
@@ -21,7 +22,6 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
         uint256 _premiumFee;
         mapping(uint256 tokenId => uint256) _totalSupply;
     }
-
 
  
     uint256 public constant STANDARD_ID = 1;
@@ -38,16 +38,7 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
     // keccak256("mint(uint256 id,uint256 articleId)")
     bytes32 private constant MINT_TYPEHASH = 0x6100155005036ded4fd7339498494e937c20d6c938a8ec6b7110ebeb97e3721c;
 
-    event FeeUpdated(uint256 newFee);
-
-    event FundsReceived(address indexed sender, uint256 value);
-
-    event PremiumArticleMinted(uint256 indexed articleId, address indexed minter);
-
-    error InvalidSignature();
-
-    error InsufficientFee(uint256 sent, uint256 required);
-
+    
 
     function _getBlogStorage() private pure returns (BlogStorage storage $) {
         assembly {
@@ -56,16 +47,35 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
     }
     
 
-    function __Blog_init(string memory uri, uint256 premiumFee) public virtual initializer {
-        __ERC1155_init(uri);
+    function __Blog_init(string memory uri_, uint256 premiumFee) public virtual initializer {
+        __ERC1155_init(uri_);
         __Ownable_init(_msgSender());
-        //__UUPSUpgradeable_init();
+        __UUPSUpgradeable_init();
         __Pausable_init();    
+        __ReentrancyGuard_init();
         __Blog_init_unchained(premiumFee);
     }
 
     function __Blog_init_unchained(uint256 premiumFee) internal virtual onlyInitializing {
         _setPremiumFee(premiumFee);
+    }
+
+    function version() public pure virtual returns(string memory) {
+        return "1.0.0";
+    }
+
+    function contractName() public pure virtual returns(string memory) {
+        return "Blog";
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable) returns (bool) {
+        return 
+            interfaceId == type(IBlog).interfaceId || 
+            super.supportsInterface(interfaceId);
+    }
+
+    function uri(uint256 id) public view virtual override returns (string memory) {
+        return string(abi.encodePacked(super.uri(id), Strings.toString(id), '.json'));
     }
 
     receive() external payable {
@@ -76,7 +86,6 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
         _pause();
     }
 
-
     function unpause() external virtual onlyOwner {
         _unpause();
     }
@@ -84,6 +93,25 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
 
     function updatePremiumFee(uint256 newFee) external virtual onlyOwner {
         _setPremiumFee(newFee);
+    }
+
+    function updateURI(string memory newURI) external virtual onlyOwner {
+        _setURI(newURI);
+    }
+
+    function withdraw(address payable des) external virtual onlyOwner nonReentrant {
+        if(balance() == 0) revert EmptyBalance();
+
+        (bool success, bytes memory why) = des.call{value: balance()}("");
+        if(!success) {
+            if(why.length > 0) {
+                revert WithdrawalFailed(abi.decode(why, (string)));
+            } else {
+                revert WithdrawalFailedNoData();
+            }
+        }
+
+        emit FundsWithdrawn(des, balance());
     }
 
 
@@ -114,15 +142,20 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
         return $._premiumFee;
     }
 
+    function balance() public virtual override returns (uint256) {
+        return address(this).balance;
+    }
 
-    function mint(uint256 id, uint256 articleId, bytes calldata signature) public payable virtual{
+
+    function mint(uint256 id, uint256 articleId, bytes calldata signature) public payable virtual nonReentrant {
         BlogStorage storage $ = _getBlogStorage();
 
         bytes32 digest = _hashMintFn(id, articleId, $._nonce);
-        require(SignatureChecker.isValidSignatureNow(_msgSender(), digest, signature), InvalidSignature());
+        if(!SignatureChecker.isValidSignatureNow(_msgSender(), digest, signature)) revert InvalidSignature();
+       
 
         if(id == PREMIUM_ID) {
-            require(msg.value == getPremiumFee(), InsufficientFee(msg.value, $._premiumFee));
+            require(msg.value == getPremiumFee(), InsufficientFee(msg.value, getPremiumFee()));
 
             emit PremiumArticleMinted(articleId, _msgSender());
         }
@@ -167,7 +200,12 @@ contract Blog is Initializable, Ownable2StepUpgradeable, ERC1155Upgradeable, Pau
         }
     }
 
+    function _authorizeUpgrade(address newImplementation) internal virtual override  onlyOwner {
+        require(stringsEqual(IBlog(newImplementation).contractName(), this.contractName()), ContractNameChanged());
+    }
 
-    function _authorizeUpgrade(address newImplementation) internal virtual override  onlyOwner {}
+    function stringsEqual(string memory a, string memory b) private pure returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
 
 }
